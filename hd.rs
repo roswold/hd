@@ -1,59 +1,3 @@
-// Hexdump a file
-fn hexdump(filename:&String,columns:usize)
-{
-    match std::fs::File::open(filename)
-    {
-        Ok(_) => {},
-        Err(_) =>
-        {
-            print!("error: cannot open '{}'\n",filename);
-            return;
-        },
-    }
-
-    let data=&std::fs::read(filename).unwrap();
-    //let data_str=std::str::from_utf8(data).unwrap();
-
-    print!("{}:\n",filename);
-    let mut i:usize=0;
-    while i<data.len()
-    {
-
-        let left=columns as i32-(data.len() as i32-i as i32);
-
-        // Hexdump
-        for j in 0..columns
-        {
-            if i+j>=data.len() {break;}
-            print!("{:02x} ",data[i+j] as u32);
-        }
-
-        // ASCII
-        for _ in 0..left
-        {
-            print!("   ");
-        }
-
-        for j in 0..columns
-        {
-            //i+=1;
-            if i+j>=data.len() {break;}
-            if data[i+j] as u32 > 32
-            {
-                print!("{}",data[i+j] as char);
-            }
-            else
-            {
-                print!(".");
-            }
-        }
-
-        print!("\n");
-        i+=columns;
-    }
-    print!("\n");
-}
-
 fn main()
 {
     let argv:Vec<String>=std::env::args().collect();
@@ -112,4 +56,60 @@ fn main()
     {
         hexdump(&file,columns);
     }
+}
+
+// Hexdump a file
+fn hexdump(filename:&String,columns:usize)
+{
+    match std::fs::File::open(filename)
+    {
+        Ok(_) => {},
+        Err(_) =>
+        {
+            print!("error: cannot open '{}'\n",filename);
+            return;
+        },
+    }
+
+    let data=&std::fs::read(filename).unwrap();
+    //let data_str=std::str::from_utf8(data).unwrap();
+
+    print!("{}:\n",filename);
+    let mut i:usize=0;
+    while i<data.len()
+    {
+
+        let left=columns as i32-(data.len() as i32-i as i32);
+
+        // Hexdump
+        for j in 0..columns
+        {
+            if i+j>=data.len() {break;}
+            print!("{:02x} ",data[i+j] as u32);
+        }
+
+        // ASCII
+        for _ in 0..left
+        {
+            print!("   ");
+        }
+
+        for j in 0..columns
+        {
+            //i+=1;
+            if i+j>=data.len() {break;}
+            if data[i+j] as u32 > 32
+            {
+                print!("{}",data[i+j] as char);
+            }
+            else
+            {
+                print!(".");
+            }
+        }
+
+        print!("\n");
+        i+=columns;
+    }
+    print!("\n");
 }
