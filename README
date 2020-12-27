@@ -1,0 +1,2 @@
+usage: hd [-w WIDTH] [--help|-h] FILES
+  -w WIDTH  Set number of columns of bytes

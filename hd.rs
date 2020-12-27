@@ -72,7 +72,7 @@ fn main()
             // Display help message
             "--help"|"-h" =>
             {
-                print!("usage: {} [--help|-h] FILES\n",
+                print!("usage: {} [-w WIDTH] [--help|-h] FILES\n",
                         argv[0]);
                 std::process::exit(0);
             },
