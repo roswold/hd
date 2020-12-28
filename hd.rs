@@ -4,6 +4,11 @@ fn main()
     let mut columns:usize=8;
     let mut files:Vec<String>=vec!();
     let mut curarg=1;
+    let mut showoffset=true;
+    let helpmsg=format!("usage: {} [-w WIDTH] [-n] [--help|-h] FILES\n\
+                         -w WIDTH    Specify number columns for output\n\
+                         -n          Don't display binary file offset",
+                        argv[0]);
 
     // Parse each file
     while curarg < argv.len()
@@ -16,8 +21,7 @@ fn main()
             // Display help message
             "--help"|"-h" =>
             {
-                print!("usage: {} [-w WIDTH] [--help|-h] FILES\n",
-                        argv[0]);
+                print!("{}\n",helpmsg);
                 std::process::exit(0);
             },
 
@@ -43,8 +47,13 @@ fn main()
                 curarg+=1;
             },
 
+            // Toggle showoffset (display file offset in bytes)
+            "-n" =>
+            {
+                showoffset=false;
+            },
+
             // Treat default arguments as filenames
-            //_ => {hexdump(&argv[curarg],columns);},
             _ => {files.push(argv[curarg].clone());},
         }
         curarg+=1;
@@ -52,14 +61,19 @@ fn main()
 
     // Hexdump each argument previously
     // identified as a filename
+    let l=files.len();
     for file in files
     {
-        hexdump(&file,columns);
+        if l>1usize
+        {
+            print!("{}:\n",file);
+        }
+        hexdump(&file,columns,showoffset);
     }
 }
 
 // Hexdump a file
-fn hexdump(filename:&String,columns:usize)
+fn hexdump(filename:&String,columns:usize,showoffset:bool)
 {
     match std::fs::File::open(filename)
     {
@@ -72,20 +86,23 @@ fn hexdump(filename:&String,columns:usize)
     }
 
     let data=&std::fs::read(filename).unwrap();
-    //let data_str=std::str::from_utf8(data).unwrap();
 
-    print!("{}:\n",filename);
     let mut i:usize=0;
     while i<data.len()
     {
 
         let left=columns as i32-(data.len() as i32-i as i32);
 
+        if showoffset
+        {
+            print!("{:08X}: ",i);
+        }
+
         // Hexdump
         for j in 0..columns
         {
             if i+j>=data.len() {break;}
-            print!("{:02x} ",data[i+j] as u32);
+            print!("{:02X} ",data[i+j] as u32);
         }
 
         // ASCII
@@ -98,7 +115,7 @@ fn hexdump(filename:&String,columns:usize)
         {
             //i+=1;
             if i+j>=data.len() {break;}
-            if data[i+j] as u32 > 32
+            if (data[i+j] as u32 > 32) && (data[i+j] as u32) < 128
             {
                 print!("{}",data[i+j] as char);
             }
