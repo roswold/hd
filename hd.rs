@@ -5,56 +5,109 @@ fn main()
     let mut files:Vec<String>=vec!();
     let mut curarg=1;
     let mut showoffset=true;
-    let helpmsg=format!("usage: {} [-w WIDTH] [-n] [--help|-h] FILES\n\
-                         -w WIDTH    Specify number columns for output\n\
-                         -n          Don't display binary file offset",
+    let mut showascii=true;
+    let helpmsg=format!("usage: {} [-ahn] [-w WIDTH] [--help] FILES\n\
+                         -a          Don't display ASCII dump\n\
+                         -h, --help  Display this help\n\
+                         -n          Don't display binary file offset\n\
+                         -w WIDTH    Specify number columns for output",
                         argv[0]);
 
     // Parse each file
     while curarg < argv.len()
     {
 
-        // Parse each argument
-        match (&argv[curarg]).as_str()
+        // Set width of columns
+        if argv[curarg]=="-w"
+        {
+            if argv.len()>curarg+1
+            {
+                curarg+=1;
+                columns=argv[curarg].parse::<usize>().unwrap();
+            }
+            else
+            {
+                print!("error: -w requires WIDTH argument\n");
+                std::process::exit(1);
+            }
+        }
+
+        // Options
+        else if argv[curarg].chars().nth(0).unwrap()=='-'
         {
 
-            // Display help message
-            "--help"|"-h" =>
+            // Long option
+            if argv[curarg].len()>curarg && argv[curarg].chars().nth(1).unwrap()=='-'
             {
-                print!("{}\n",helpmsg);
-                std::process::exit(0);
-            },
-
-            // Set width/number of columns
-            "-w" =>
-            {
-                if argv.len()<=curarg+1
+                match argv[curarg].as_str()
                 {
-                    print!("error: -w: width required\n");
-                    std::process::exit(1);
+
+                    // Display help message
+                    "--help" =>
+                    {
+                        print!("{}\n",helpmsg);
+                        std::process::exit(0);
+                    },
+
+                    // Unrecognized option
+                    _ =>
+                    {
+                        print!("error: unrecognized long option '{}'\n",argv[curarg]);
+                        std::process::exit(1);
+                    },
                 }
+            }
 
-                columns=match argv[curarg+1].parse::<usize>()
-                {
-                    Ok(n) => n,
-                    Err(_) => {print!("error: -w: invalid width argument\n"); 8 as usize},
-                };
-
-                if columns<2 || columns > 128
-                {
-                    columns=8;
-                }
-                curarg+=1;
-            },
-
-            // Toggle showoffset (display file offset in bytes)
-            "-n" =>
+            // Short options
+            else
             {
-                showoffset=false;
-            },
+                for i in 1..argv[curarg].len()
+                {
+                    let c=argv[curarg].chars().nth(i).unwrap();
 
-            // Treat default arguments as filenames
-            _ => {files.push(argv[curarg].clone());},
+                    match c
+                    {
+
+                        // Toggle showoffset (display file offset of hexdump)
+                        'n' =>
+                        {
+                            showoffset=false;
+                        },
+
+                        // Toggle showascii (show ascii rendering)
+                        'a' =>
+                        {
+                            showascii=false;
+                        },
+
+                        // Display help message
+                        'h' =>
+                        {
+                            print!("{}\n",helpmsg);
+                            std::process::exit(0);
+                        },
+
+                        // Warning
+                        'w' =>
+                        {
+                            print!("warning: use -w on its own\n");
+                        },
+
+                        // Unrecognized option
+                        _ =>
+                        {
+                            print!("error: unrecognized short option '{}'\n",c);
+                            std::process::exit(1);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Default options treated as input files
+        else
+        {
+            files.push(argv[curarg].clone());
         }
         curarg+=1;
     }
@@ -68,12 +121,12 @@ fn main()
         {
             print!("{}:\n",file);
         }
-        hexdump(&file,columns,showoffset);
+        hexdump(&file,columns,showoffset,showascii);
     }
 }
 
 // Hexdump a file
-fn hexdump(filename:&String,columns:usize,showoffset:bool)
+fn hexdump(filename:&String,columns:usize,showoffset:bool,showascii:bool)
 {
     match std::fs::File::open(filename)
     {
@@ -105,23 +158,26 @@ fn hexdump(filename:&String,columns:usize,showoffset:bool)
             print!("{:02X} ",data[i+j] as u32);
         }
 
-        // ASCII
-        for _ in 0..left
+        if showascii
         {
-            print!("   ");
-        }
-
-        for j in 0..columns
-        {
-            //i+=1;
-            if i+j>=data.len() {break;}
-            if (data[i+j] as u32 > 32) && (data[i+j] as u32) < 128
+            // ASCII
+            for _ in 0..left
             {
-                print!("{}",data[i+j] as char);
+                print!("   ");
             }
-            else
+
+            for j in 0..columns
             {
-                print!(".");
+                //i+=1;
+                if i+j>=data.len() {break;}
+                if (data[i+j] as u32 > 32) && (data[i+j] as u32) < 128
+                {
+                    print!("{}",data[i+j] as char);
+                }
+                else
+                {
+                    print!(".");
+                }
             }
         }
 

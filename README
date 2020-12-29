@@ -1,2 +1,5 @@
-usage: hd [-w WIDTH] [--help|-h] FILES
-  -w WIDTH  Set number of columns of bytes
+usage: hd [-ahn] [-w WIDTH] [--help] FILES
+-a          Don't display ASCII dump
+-h, --help  Display this help
+-n          Don't display binary file offset
+-w WIDTH    Specify number columns for output
