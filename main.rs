@@ -7,12 +7,14 @@ fn main()
     let mut showoffset=true;
     let mut showascii=true;
     let mut numbytes:usize=0;
+    let mut percent:f32=1.0;
     let helpmsg=format!("usage: {} [-abh] [-n OFFSET] [-w WIDTH] [--help] FILES\n\
                          -a          Don't display ASCII dump\n\
                          -b          Don't display binary file offset\n\
                          -h, --help  Display this help\n\
-                         -n OFFSET   Number of bytes to read\n\
-                         -w WIDTH    Specify number of columns for output",
+                         -n SIZE     Number of bytes to read\n\
+                         -w WIDTH    Specify number of columns for output\n\n\
+                         SIZE        Either an unsigned integer or a percentage such as 50%, 100%",
                         argv[0]);
 
     // Parse each file
@@ -44,12 +46,28 @@ fn main()
             if argv.len()>curarg+1
             {
                 curarg+=1;
-                numbytes=match argv[curarg].parse::<usize>()
+
+                // Set percentage
+                if argv[curarg].chars().nth(argv[curarg].len()-1).unwrap()=='%'
                 {
-                    Ok(n) => n,
-                    Err(_) => 0,
-                };
+                    percent=match argv[curarg][0..argv[curarg].len()-1].parse::<usize>()
+                    {
+                        Ok(n) => n as f32/100.0,
+                        Err(_) => 1.0,
+                    };
+                }
+
+                // Set bytes offset
+                else
+                {
+                    numbytes=match argv[curarg].parse::<usize>()
+                    {
+                        Ok(n) => n,
+                        Err(_) => 0,
+                    };
+                }
             }
+
             else
             {
                 print!("error: -n requires WIDTH argument\n");
@@ -146,12 +164,12 @@ fn main()
         {
             print!("{}:\n",file);
         }
-        hexdump(&file,columns,showoffset,showascii,numbytes);
+        hexdump(&file,columns,showoffset,showascii,numbytes,percent);
     }
 }
 
 // Hexdump a file
-fn hexdump(filename:&String,columns:usize,showoffset:bool,showascii:bool,numbytes:usize)
+fn hexdump(filename:&String,columns:usize,showoffset:bool,showascii:bool,numbytes:usize,percent:f32)
 {
     match std::fs::File::open(filename)
     {
@@ -173,9 +191,13 @@ fn hexdump(filename:&String,columns:usize,showoffset:bool,showascii:bool,numbyte
         length=numbytes;
     }
 
+    else if percent<1.0
+    {
+        length=(data.len() as f32*percent) as usize;
+    }
+
     while i<length
     {
-
         let left=columns as i32-(length as i32-i as i32);
 
         if showoffset
