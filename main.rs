@@ -168,7 +168,7 @@ fn hexdump(filename:&String,columns:usize,showoffset:bool,showascii:bool,numbyte
     let mut i:usize=0;
 
     // Set length appropriately
-    if numbytes<data.len()
+    if numbytes>0 && numbytes<data.len()
     {
         length=numbytes;
     }
