@@ -1,32 +1,10 @@
-struct Hdinfo
-{
-    columns:usize,
-    showoffset:bool,
-    showascii:bool,
-    numbytes:usize,
-    radix:u32,
-    percent:f32,
-}
-
-fn newhd() -> Hdinfo
-{
-    return Hdinfo{
-        columns:8,
-        showoffset:true,
-        showascii:true,
-        numbytes:0,
-        radix:16,
-        percent:1.0,
-    }
-}
-
 fn main()
 {
     let argv:Vec<String>=std::env::args().collect();
     let mut files:Vec<String>=vec!();
     let mut curarg=1;
     let mut h:Hdinfo=newhd();
-    let helpmsg=format!("usage: {} [-abh] [-n OFFSET] [-w WIDTH] [--help] FILES\n\
+    let helpmsg=format!("usage: {} [-abh] [-n OFFSET] [-r RADIX] [-w WIDTH] [--help] FILES\n\
                          -a          Don't display ASCII dump\n\
                          -b          Don't display binary file offset\n\
                          -h, --help  Display this help\n\
@@ -205,6 +183,30 @@ fn main()
             print!("{}:\n",file);
         }
         hexdump(&file,&h);
+    }
+}
+
+// Contain information for hexdump
+struct Hdinfo
+{
+    columns:usize,
+    showoffset:bool,
+    showascii:bool,
+    numbytes:usize,
+    radix:u32,
+    percent:f32,
+}
+
+// Initialize Hdinfo struct
+fn newhd() -> Hdinfo
+{
+    return Hdinfo{
+        columns:8,
+        showoffset:true,
+        showascii:true,
+        numbytes:0,
+        radix:16,
+        percent:1.0,
     }
 }
 
