@@ -1,5 +1,8 @@
-usage: hd [-ahn] [-w WIDTH] [--help] FILES
+usage: hd [-abh] [-n OFFSET] [-w WIDTH] [--help] FILES
 -a          Don't display ASCII dump
+-b          Don't display binary file offset
 -h, --help  Display this help
--n          Don't display binary file offset
--w WIDTH    Specify number columns for output
+-n SIZE     Number of bytes to read
+-w WIDTH    Specify number of columns for output
+
+SIZE        Either an unsigned integer or a percentage such as 50%, 100%
