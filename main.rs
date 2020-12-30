@@ -7,12 +7,12 @@ fn main()
     let mut showoffset=true;
     let mut showascii=true;
     let mut numbytes:usize=0;
-    let helpmsg=format!("usage: {} [-ahn] [-w WIDTH] [--help] FILES\n\
+    let helpmsg=format!("usage: {} [-abhn] [-w WIDTH] [--help] FILES\n\
                          -a          Don't display ASCII dump\n\
                          -b          Don't display binary file offset\n\
                          -h, --help  Display this help\n\
                          -n OFFSET   Number of bytes to read\n\
-                         -w WIDTH    Specify number columns for output",
+                         -w WIDTH    Specify number of columns for output",
                         argv[0]);
 
     // Parse each file
