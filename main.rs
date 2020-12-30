@@ -7,7 +7,7 @@ fn main()
     let mut showoffset=true;
     let mut showascii=true;
     let mut numbytes:usize=0;
-    let helpmsg=format!("usage: {} [-abhn] [-w WIDTH] [--help] FILES\n\
+    let helpmsg=format!("usage: {} [-abh] [-n OFFSET] [-w WIDTH] [--help] FILES\n\
                          -a          Don't display ASCII dump\n\
                          -b          Don't display binary file offset\n\
                          -h, --help  Display this help\n\
