@@ -9,5 +9,8 @@ uninstall:
 hd: main.rs
 	rustc $^ -o $@
 	@strip $@
+%:%.rs
+	rustc $^ -o $@
+	@strip $@
 clean:
 	$(RM) $(OBJS)

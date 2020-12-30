@@ -4,6 +4,7 @@ struct Hdinfo
     showoffset:bool,
     showascii:bool,
     numbytes:usize,
+    radix:u32,
     percent:f32,
 }
 
@@ -14,6 +15,7 @@ fn newhd() -> Hdinfo
         showoffset:true,
         showascii:true,
         numbytes:0,
+        radix:16,
         percent:1.0,
     }
 }
@@ -29,8 +31,10 @@ fn main()
                          -b          Don't display binary file offset\n\
                          -h, --help  Display this help\n\
                          -n SIZE     Number of bytes to read\n\
-                         -w WIDTH    Specify number of columns for output\n\n\
-                         SIZE        Either an unsigned integer or a percentage such as 50%",
+                         -r RADIX    Number base (default: 16)\n\
+                         -w WIDTH    Number of columns for output\n\n\
+                         SIZE        An unsigned integer or a percentage (e.g., 50%)\n\
+                         RADIX       One of: 8, 10, 16",
                         argv[0]);
 
     // Parse each file
@@ -52,6 +56,25 @@ fn main()
             else
             {
                 print!("error: -w requires WIDTH argument\n");
+                std::process::exit(1);
+            }
+        }
+
+        // Set radix/base for hex dump
+        else if argv[curarg]=="-r"
+        {
+            if argv.len()>curarg+1
+            {
+                curarg+=1;
+                h.radix=match argv[curarg].parse::<usize>()
+                {
+                    Ok(n) => n as u32,
+                    Err(_) => 16u32,
+                };
+            }
+            else
+            {
+                print!("error: -r requires RADIX argument\n");
                 std::process::exit(1);
             }
         }
@@ -86,7 +109,7 @@ fn main()
 
             else
             {
-                print!("error: -n requires WIDTH argument\n");
+                print!("error: -n requires SIZE argument\n");
                 std::process::exit(1);
             }
         }
@@ -147,9 +170,10 @@ fn main()
                         },
 
                         // Warning for short options with arguments
-                        'w' | 'n' =>
+                        'w' | 'n' | 'r' =>
                         {
-                            print!("warning: use -w on its own\n");
+                            print!("warning: use -{} on its own\n",
+                                   argv[curarg].chars().nth(i).unwrap());
                         },
 
                         // Unrecognized option
@@ -225,7 +249,23 @@ fn hexdump(filename:&String,h:&Hdinfo)
         for j in 0..h.columns
         {
             if i+j>=length {break;}
-            print!("{:02X} ",data[i+j] as u32);
+            if h.radix==16
+            {
+                print!("{:02X} ",data[i+j] as u32);
+            }
+            else if h.radix==8
+            {
+                print!("{:03o} ",data[i+j] as u32);
+            }
+            else if h.radix==10
+            {
+                print!("{:03} ",data[i+j] as u32);
+            }
+            else
+            {
+                print!("error: unrecognized radix '{}'\n",h.radix);
+                std::process::exit(1);
+            }
         }
 
         if h.showascii
@@ -233,7 +273,14 @@ fn hexdump(filename:&String,h:&Hdinfo)
             // ASCII
             for _ in 0..left
             {
-                print!("   ");
+                if h.radix==16
+                {
+                    print!("   ");
+                }
+                else //if h.radix==8
+                {
+                    print!("    ");
+                }
             }
 
             for j in 0..h.columns
