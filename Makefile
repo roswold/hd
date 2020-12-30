@@ -6,8 +6,8 @@ install: $(OBJS)
 	cp hd $(PREFIX)/
 uninstall:
 	$(RM) $(PREFIX)/hd
-%:%.rs
-	rustc $^
+hd: main.rs
+	rustc $^ -o $@
 	@strip $@
 clean:
 	$(RM) $(OBJS)

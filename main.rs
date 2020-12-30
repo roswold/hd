@@ -6,10 +6,12 @@ fn main()
     let mut curarg=1;
     let mut showoffset=true;
     let mut showascii=true;
+    let mut numbytes:usize=0;
     let helpmsg=format!("usage: {} [-ahn] [-w WIDTH] [--help] FILES\n\
                          -a          Don't display ASCII dump\n\
+                         -b          Don't display binary file offset\n\
                          -h, --help  Display this help\n\
-                         -n          Don't display binary file offset\n\
+                         -n OFFSET   Number of bytes to read\n\
                          -w WIDTH    Specify number columns for output",
                         argv[0]);
 
@@ -23,11 +25,34 @@ fn main()
             if argv.len()>curarg+1
             {
                 curarg+=1;
-                columns=argv[curarg].parse::<usize>().unwrap();
+                columns=match argv[curarg].parse::<usize>()
+                {
+                    Ok(n) => n,
+                    Err(_) => 8,
+                };
             }
             else
             {
                 print!("error: -w requires WIDTH argument\n");
+                std::process::exit(1);
+            }
+        }
+
+        // Set number of bytes to read
+        else if argv[curarg]=="-n"
+        {
+            if argv.len()>curarg+1
+            {
+                curarg+=1;
+                numbytes=match argv[curarg].parse::<usize>()
+                {
+                    Ok(n) => n,
+                    Err(_) => 0,
+                };
+            }
+            else
+            {
+                print!("error: -n requires WIDTH argument\n");
                 std::process::exit(1);
             }
         }
@@ -69,7 +94,7 @@ fn main()
                     {
 
                         // Toggle showoffset (display file offset of hexdump)
-                        'n' =>
+                        'b' =>
                         {
                             showoffset=false;
                         },
@@ -87,8 +112,8 @@ fn main()
                             std::process::exit(0);
                         },
 
-                        // Warning
-                        'w' =>
+                        // Warning for short options with arguments
+                        'w' | 'n' =>
                         {
                             print!("warning: use -w on its own\n");
                         },
@@ -121,12 +146,12 @@ fn main()
         {
             print!("{}:\n",file);
         }
-        hexdump(&file,columns,showoffset,showascii);
+        hexdump(&file,columns,showoffset,showascii,numbytes);
     }
 }
 
 // Hexdump a file
-fn hexdump(filename:&String,columns:usize,showoffset:bool,showascii:bool)
+fn hexdump(filename:&String,columns:usize,showoffset:bool,showascii:bool,numbytes:usize)
 {
     match std::fs::File::open(filename)
     {
@@ -139,12 +164,19 @@ fn hexdump(filename:&String,columns:usize,showoffset:bool,showascii:bool)
     }
 
     let data=&std::fs::read(filename).unwrap();
-
+    let mut length:usize=data.len();
     let mut i:usize=0;
-    while i<data.len()
+
+    // Set length appropriately
+    if numbytes<data.len()
+    {
+        length=numbytes;
+    }
+
+    while i<length
     {
 
-        let left=columns as i32-(data.len() as i32-i as i32);
+        let left=columns as i32-(length as i32-i as i32);
 
         if showoffset
         {
@@ -154,7 +186,7 @@ fn hexdump(filename:&String,columns:usize,showoffset:bool,showascii:bool)
         // Hexdump
         for j in 0..columns
         {
-            if i+j>=data.len() {break;}
+            if i+j>=length {break;}
             print!("{:02X} ",data[i+j] as u32);
         }
 
@@ -169,7 +201,7 @@ fn hexdump(filename:&String,columns:usize,showoffset:bool,showascii:bool)
             for j in 0..columns
             {
                 //i+=1;
-                if i+j>=data.len() {break;}
+                if i+j>=length {break;}
                 if (data[i+j] as u32 > 32) && (data[i+j] as u32) < 128
                 {
                     print!("{}",data[i+j] as char);
