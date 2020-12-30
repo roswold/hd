@@ -1,20 +1,36 @@
+struct Hdinfo
+{
+    columns:usize,
+    showoffset:bool,
+    showascii:bool,
+    numbytes:usize,
+    percent:f32,
+}
+
+fn newhd() -> Hdinfo
+{
+    return Hdinfo{
+        columns:8,
+        showoffset:true,
+        showascii:true,
+        numbytes:0,
+        percent:1.0,
+    }
+}
+
 fn main()
 {
     let argv:Vec<String>=std::env::args().collect();
-    let mut columns:usize=8;
     let mut files:Vec<String>=vec!();
     let mut curarg=1;
-    let mut showoffset=true;
-    let mut showascii=true;
-    let mut numbytes:usize=0;
-    let mut percent:f32=1.0;
+    let mut h:Hdinfo=newhd();
     let helpmsg=format!("usage: {} [-abh] [-n OFFSET] [-w WIDTH] [--help] FILES\n\
                          -a          Don't display ASCII dump\n\
                          -b          Don't display binary file offset\n\
                          -h, --help  Display this help\n\
                          -n SIZE     Number of bytes to read\n\
                          -w WIDTH    Specify number of columns for output\n\n\
-                         SIZE        Either an unsigned integer or a percentage such as 50%, 100%",
+                         SIZE        Either an unsigned integer or a percentage such as 50%",
                         argv[0]);
 
     // Parse each file
@@ -27,7 +43,7 @@ fn main()
             if argv.len()>curarg+1
             {
                 curarg+=1;
-                columns=match argv[curarg].parse::<usize>()
+                h.columns=match argv[curarg].parse::<usize>()
                 {
                     Ok(n) => n,
                     Err(_) => 8,
@@ -50,7 +66,7 @@ fn main()
                 // Set percentage
                 if argv[curarg].chars().nth(argv[curarg].len()-1).unwrap()=='%'
                 {
-                    percent=match argv[curarg][0..argv[curarg].len()-1].parse::<usize>()
+                    h.percent=match argv[curarg][0..argv[curarg].len()-1].parse::<usize>()
                     {
                         Ok(n) => n as f32/100.0,
                         Err(_) => 1.0,
@@ -60,7 +76,7 @@ fn main()
                 // Set bytes offset
                 else
                 {
-                    numbytes=match argv[curarg].parse::<usize>()
+                    h.numbytes=match argv[curarg].parse::<usize>()
                     {
                         Ok(n) => n,
                         Err(_) => 0,
@@ -114,13 +130,13 @@ fn main()
                         // Toggle showoffset (display file offset of hexdump)
                         'b' =>
                         {
-                            showoffset=false;
+                            h.showoffset=false;
                         },
 
                         // Toggle showascii (show ascii rendering)
                         'a' =>
                         {
-                            showascii=false;
+                            h.showascii=false;
                         },
 
                         // Display help message
@@ -164,12 +180,12 @@ fn main()
         {
             print!("{}:\n",file);
         }
-        hexdump(&file,columns,showoffset,showascii,numbytes,percent);
+        hexdump(&file,&h);
     }
 }
 
 // Hexdump a file
-fn hexdump(filename:&String,columns:usize,showoffset:bool,showascii:bool,numbytes:usize,percent:f32)
+fn hexdump(filename:&String,h:&Hdinfo)
 {
     match std::fs::File::open(filename)
     {
@@ -186,33 +202,33 @@ fn hexdump(filename:&String,columns:usize,showoffset:bool,showascii:bool,numbyte
     let mut i:usize=0;
 
     // Set length appropriately
-    if numbytes>0 && numbytes<data.len()
+    if h.numbytes>0 && h.numbytes<data.len()
     {
-        length=numbytes;
+        length=h.numbytes;
     }
 
-    else if percent<1.0
+    else if h.percent<1.0
     {
-        length=(data.len() as f32*percent) as usize;
+        length=(data.len() as f32*h.percent) as usize;
     }
 
     while i<length
     {
-        let left=columns as i32-(length as i32-i as i32);
+        let left=h.columns as i32-(length as i32-i as i32);
 
-        if showoffset
+        if h.showoffset
         {
             print!("{:08X}: ",i);
         }
 
         // Hexdump
-        for j in 0..columns
+        for j in 0..h.columns
         {
             if i+j>=length {break;}
             print!("{:02X} ",data[i+j] as u32);
         }
 
-        if showascii
+        if h.showascii
         {
             // ASCII
             for _ in 0..left
@@ -220,7 +236,7 @@ fn hexdump(filename:&String,columns:usize,showoffset:bool,showascii:bool,numbyte
                 print!("   ");
             }
 
-            for j in 0..columns
+            for j in 0..h.columns
             {
                 //i+=1;
                 if i+j>=length {break;}
@@ -236,7 +252,7 @@ fn hexdump(filename:&String,columns:usize,showoffset:bool,showascii:bool,numbyte
         }
 
         print!("\n");
-        i+=columns;
+        i+=h.columns;
     }
     print!("\n");
 }
