@@ -3,6 +3,8 @@ usage: hd [-abh] [-n OFFSET] [-w WIDTH] [--help] FILES
 -b          Don't display binary file offset
 -h, --help  Display this help
 -n SIZE     Number of bytes to read
--w WIDTH    Specify number of columns for output
+-r RADIX    Number base (default: 16)
+-w WIDTH    Number of columns for output
 
-SIZE        Either an unsigned integer or a percentage such as 50%, 100%
+SIZE        An unsigned integer or a percentage (e.g., 50%)
+RADIX       One of: 8, 10, 16
